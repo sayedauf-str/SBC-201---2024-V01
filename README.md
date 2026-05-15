@@ -1,20 +1,27 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# SBC-201:2024 Compliance AI Assistant
 
-# Run and deploy your AI Studio app
+A full-stack application for Saudi Diyar Consultants (SDC) to verify building code compliance.
 
-This contains everything you need to run your app locally.
+## Deployment to GitHub & Vercel
 
-View your app in AI Studio: https://ai.studio/apps/84f48191-f257-4cad-9215-0eec94a151cc
+### 1. Push to GitHub
+Create a new repository on GitHub and push this codebase.
 
-## Run Locally
+### 2. Connect to Vercel
+1. Go to [Vercel](https://vercel.com/) and import your GitHub repository.
+2. **Environment Variables**: In the Vercel project settings, add the following environment variable:
+   - `GEMINI_API_KEY`: Your Google AI Studio API Key.
+3. **Build Settings**: Vercel should automatically detect the settings, but ensure they match:
+   - Framework Preset: `Vite`
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+   - Install Command: `npm install`
 
-**Prerequisites:**  Node.js
+### 3. Usage
+The application uses a secure backend proxy to communicate with the Gemini API, keeping your API key protected from the client-side code.
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Development
+To run locally:
+1. `npm install`
+2. Create a `.env` file with your `GEMINI_API_KEY`.
+3. `npm run dev`
