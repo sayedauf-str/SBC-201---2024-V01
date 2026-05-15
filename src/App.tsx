@@ -279,8 +279,8 @@ export default function App() {
     const aiMessages = messages.filter(m => m.role === 'assistant');
     const userQueries = messages.filter(m => m.role === 'user');
 
-    const firstQuery = userQueries[0]?.content || 'Compliance Assessment';
-    const dynamicTitle = firstQuery.length > 60 ? 'Compliance Technical Assessment' : firstQuery;
+    const firstQuery = userQueries[0]?.content.replace(/[*#]/g, '').trim() || 'Compliance Assessment';
+    const dynamicTitle = firstQuery.length > 80 ? firstQuery.slice(0, 77) + '...' : firstQuery;
     const reportTitle = `${dynamicTitle} — SBC-201:2024`;
 
     let summaryItems = userQueries.map((m) => {
@@ -302,7 +302,7 @@ export default function App() {
     printWindow.document.write(`
       <html>
         <head>
-          <title>SBC-201:2024 Compliance Report</title>
+          <title>${reportTitle}</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=Cormorant+Garamond:wght@400;700&display=swap');
             body { font-family: 'IBM Plex Sans', sans-serif; padding: 40px; line-height: 1.6; color: #1a202c; }
