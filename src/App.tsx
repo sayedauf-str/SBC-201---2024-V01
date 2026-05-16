@@ -455,14 +455,10 @@ export default function App() {
             </div>
           </div>
 
-          <div className="mt-auto p-4 border-t border-cyan/10 font-mono text-[7px] text-slate-600 tracking-wider leading-relaxed text-center group">
-            <div className="group-hover:text-gold transition-colors">
-              Restricted for Internal Use by SDC Only
-            </div>
-            <div className="group-hover:text-gold transition-colors mt-0.5">
-              Developed by Sayed Auf
-            </div>
-            <div className="group-hover:text-gold transition-colors mt-0.5">
+          <div className="mt-auto p-4 border-t border-cyan/10 font-mono text-[8px] text-gold/60 tracking-widest leading-relaxed text-center opacity-80 group">
+            <div className="group-hover:text-gold transition-all duration-300">
+              Restricted for Internal Use by SDC Only<br />
+              Developed by Sayed Auf<br />
               Version (V-01) 2026
             </div>
           </div>
@@ -646,12 +642,12 @@ export default function App() {
           </div>
 
           {/* Input Area */}
-          <div className="px-9 py-5 pb-6 bg-gradient-to-t from-bg-void to-transparent shrink-0">
+          <div className="px-9 py-3 pb-4 bg-gradient-to-t from-bg-void to-transparent shrink-0">
             {attachedFile && (
               <motion.div 
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2 px-3 py-2 bg-cyan/10 border border-cyan/25 rounded-lg mb-2.5 text-xs text-cyan group"
+                className="flex items-center gap-2 px-3 py-2 bg-cyan/10 border border-cyan/25 rounded-lg mb-2 text-xs text-cyan group"
               >
                 <Paperclip size={14} />
                 <span className="flex-1 truncate">{attachedFile.name}</span>
@@ -662,7 +658,7 @@ export default function App() {
             )}
 
             <div className={cn(
-              "flex gap-3 items-end bg-bg-input border border-cyan/20 rounded-[16px] p-3 px-3 transition-all",
+              "flex gap-3 items-end bg-bg-input border border-cyan/20 rounded-[16px] p-2.5 px-3 transition-all",
               "focus-within:border-cyan focus-within:ring-4 focus-within:ring-cyan/5 focus-within:shadow-[0_0_20px_rgba(56,185,255,0.15)]"
             )}>
               <button 
@@ -684,7 +680,7 @@ export default function App() {
                   }
                 }}
                 placeholder="Ask a compliance question or description for review..."
-                className="flex-1 bg-transparent border-none outline-none text-[#d8e6f5] text-sm leading-relaxed resize-none max-h-40 min-h-[22px] py-2 placeholder:text-slate-700"
+                className="flex-1 bg-transparent border-none outline-none text-[#d8e6f5] text-sm leading-relaxed resize-none max-h-40 min-h-[22px] py-1.5 placeholder:text-slate-700"
                 rows={1}
               />
 
@@ -692,26 +688,20 @@ export default function App() {
                 onClick={handleSend}
                 disabled={(!input.trim() && !attachedFile) || isLoading}
                 aria-label="Send Message"
-                className="w-9.5 h-9.5 bg-gradient-to-br from-cyan/20 to-cyan/10 border border-cyan/45 rounded-xl text-cyan flex items-center justify-center hover:from-cyan/30 hover:shadow-cyan-glow hover:scale-105 transition-all disabled:opacity-30 disabled:scale-100 cursor-pointer"
+                className="w-9 h-9 bg-gradient-to-br from-cyan/20 to-cyan/10 border border-cyan/45 rounded-xl text-cyan flex items-center justify-center hover:from-cyan/30 hover:shadow-cyan-glow hover:scale-105 transition-all disabled:opacity-30 disabled:scale-100 cursor-pointer"
               >
                 <SendIcon size={16} />
               </button>
             </div>
 
-            <div className="flex flex-col mt-4 gap-1 items-center">
+            <div className="flex flex-col mt-2 gap-1 items-center">
               <div className="flex items-center justify-between w-full px-1">
-                <span className="font-mono text-[9px] text-slate-700 tracking-wider">
+                <span className="font-mono text-[9px] text-slate-800 tracking-wider">
                   Enter to send · Shift+Enter for new line · 📎 attach drawings
                 </span>
-                <span className="font-mono text-[9px] text-slate-700">
+                <span className="font-mono text-[9px] text-slate-800">
                   {input.length}
                 </span>
-              </div>
-              
-              <div className="font-mono text-[9px] text-gold/80 tracking-widest leading-relaxed text-center mt-2 px-4 border-t border-gold/10 pt-3 opacity-90 max-w-sm">
-                Restricted for Internal Use by SDC Only<br />
-                Developed by Sayed Auf<br />
-                Version (V-01) 2026
               </div>
             </div>
           </div>
