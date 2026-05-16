@@ -1,7 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
 
+// Support both platform-native process.env and Vite-standard import.meta.env
+const API_KEY = process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || "";
+
 const ai = new GoogleGenAI({ 
-  apiKey: process.env.GEMINI_API_KEY || "" 
+  apiKey: API_KEY 
 });
 
 async function handleApiError(error: any) {

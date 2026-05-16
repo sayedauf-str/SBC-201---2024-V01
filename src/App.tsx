@@ -369,9 +369,9 @@ export default function App() {
       {/* Top Bar */}
       <header className="flex items-center justify-between px-7 h-20 bg-gradient-to-r from-bg-deep/97 to-bg-panel/97 border-b border-cyan/20 backdrop-blur-xl shrink-0 relative z-50">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-bg-deep border border-cyan/45 rounded-full flex flex-col items-center justify-center overflow-hidden cyan-glow shrink-0 font-mono text-cyan leading-tight p-1">
-            <div className="text-[10px] font-bold">SBC 201</div>
-            <div className="text-[10px]">2024</div>
+          <div className="px-3 py-1.5 bg-bg-deep border border-gold/45 rounded flex flex-col items-center justify-center shrink-0 font-display text-gold leading-tight shadow-[0_0_15px_rgba(200,169,110,0.15)]">
+            <div className="text-[9px] font-bold whitespace-nowrap uppercase tracking-wider">Saudi Diyar Consultant</div>
+            <div className="text-[7px] font-medium whitespace-nowrap opacity-80">AI Integration & Automation Unit</div>
           </div>
           <div className="flex flex-col gap-0.5">
             <h1 className="font-display text-xl font-semibold text-[#d8e6f5] tracking-wide leading-none">
@@ -475,9 +475,9 @@ export default function App() {
                   exit={{ opacity: 0 }}
                   className="flex flex-col items-center justify-center flex-1 text-center p-10 mt-10"
                 >
-                  <div className="w-28 h-28 bg-bg-deep border border-cyan/45 rounded-full flex flex-col items-center justify-center mb-6 shadow-cyan-glow overflow-hidden font-mono text-cyan leading-tight p-2">
-                    <div className="text-[14px] font-bold">SBC 201</div>
-                    <div className="text-[14px]">2024</div>
+                  <div className="px-8 py-5 bg-bg-deep border border-gold/45 rounded-xl flex flex-col items-center justify-center mb-8 shadow-[0_0_25px_rgba(200,169,110,0.15)] font-display text-gold leading-tight">
+                    <div className="text-lg font-bold mb-1 tracking-wide">Saudi Diyar Consultant</div>
+                    <div className="text-sm font-semibold opacity-90 uppercase tracking-widest">AI Integration & Automation Unit</div>
                   </div>
                   <h2 className="font-display text-3xl font-semibold text-[#d8e6f5] mb-2.5">
                     SBC-201:2024 Compliance Advisor
