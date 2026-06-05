@@ -455,11 +455,11 @@ export default function App() {
             </div>
           </div>
 
-          <div className="mt-auto p-4 border-t border-cyan/10 font-mono text-[8px] text-gold/60 tracking-widest leading-relaxed text-center opacity-80 group">
-            <div className="group-hover:text-gold transition-all duration-300">
-              Restricted for Internal Use by SDC Only<br />
-              Developed by Sayed Auf<br />
-              Version (V-01) 2026
+          <div className="mt-auto p-4 border-t border-cyan/10 font-mono text-[8.5px] text-gold tracking-widest leading-relaxed text-center group transition-all duration-300">
+            <div className="transition-all duration-300" style={{ textShadow: '0 0 8px rgba(200, 169, 110, 0.45)' }}>
+              <span className="text-red-500 font-bold" style={{ color: '#ff3b30', textShadow: '0 0 12px rgba(255, 59, 48, 0.85), 0 0 3px rgba(255, 59, 48, 0.4)' }}>Restricted</span> for Internal Use by SDC Only<br />
+              <span className="opacity-95">Developed by Sayed Auf</span><br />
+              <span className="opacity-90">Version (V-01) 2026</span>
             </div>
           </div>
         </aside>
