@@ -231,46 +231,366 @@ export default function App() {
     }, 1000);
   };
 
+  const convertSpelledGreekToSymbols = (text: string): string => {
+    if (!text) return text;
+    let res = text;
+    
+    // Handcrafted case-sensitive or carefully matched replacements to represent symbols identically
+    const greekMap: { [key: string]: string } = {
+      'alpha': 'α',
+      'Alpha': 'α',
+      'beta': 'β',
+      'Beta': 'β',
+      'gamma': 'γ',
+      'Gamma': 'γ',
+      'roh': 'ρ',
+      'Roh': 'ρ',
+      'rho': 'ρ',
+      'Rho': 'ρ',
+      'delta': 'δ',
+      'Delta': 'Δ',
+      'theta': 'θ',
+      'Theta': 'θ',
+      'lambda': 'λ',
+      'Lambda': 'λ',
+      'sigma': 'σ',
+      'Sigma': 'Σ',
+      'phi': 'φ',
+      'Phi': 'Φ',
+      'omega': 'ω',
+      'Omega': 'Ω',
+      'pi': 'π',
+      'Pi': 'π',
+      'mu': 'μ',
+      'Mu': 'μ',
+      'epsilon': 'ε',
+      'Epsilon': 'ε'
+    };
+
+    Object.entries(greekMap).forEach(([word, sym]) => {
+      const regex = new RegExp(`\\b${word}\\b`, 'g');
+      res = res.replace(regex, sym);
+    });
+    
+    return res;
+  };
+
+  const markdownTableToPlainText = (markdown: string): string => {
+    const lines = markdown.split('\n');
+    const resultLines: string[] = [];
+    let inTable = false;
+    let tableLines: string[] = [];
+
+    const flushTable = () => {
+      if (tableLines.length === 0) return;
+      try {
+        const parsedRows = tableLines.map(line => {
+          let parts = line.split('|');
+          if (line.startsWith('|')) parts.shift();
+          if (line.endsWith('|')) parts.pop();
+          return parts.map(p => p.trim());
+        });
+
+        if (parsedRows.length < 2) {
+          resultLines.push(...tableLines);
+          tableLines = [];
+          return;
+        }
+
+        let sepIndex = 1;
+        const isSeparator = (cols: string[]) => cols.every(c => c.replace(/[-:| ]/g, '').length === 0);
+        
+        if (!isSeparator(parsedRows[1])) {
+          const foundSep = parsedRows.findIndex((row, idx) => idx > 0 && isSeparator(row));
+          if (foundSep !== -1) {
+            sepIndex = foundSep;
+          }
+        }
+
+        const headers = parsedRows[0];
+        const dataRows = parsedRows.filter((_, idx) => idx !== sepIndex && idx !== 0);
+
+        const colWidths: number[] = [];
+        const allRows = [headers, ...dataRows];
+        const maxCols = Math.max(...allRows.map(r => r.length));
+
+        for (let c = 0; c < maxCols; c++) {
+          let maxW = 0;
+          allRows.forEach(row => {
+            if (row[c]) {
+              maxW = Math.max(maxW, row[c].length);
+            }
+          });
+          colWidths.push(Math.max(maxW + 2, 4));
+        }
+
+        const buildBorder = (char = '-') => {
+          return '+' + colWidths.map(w => char.repeat(w)).join('+') + '+';
+        };
+
+        const tableText: string[] = [];
+        tableText.push(buildBorder('='));
+        
+        const formatRow = (cols: string[]) => {
+          const paddedCols = colWidths.map((w, colIdx) => {
+            const val = cols[colIdx] || '';
+            const padLen = w - val.length;
+            const leftPad = 1;
+            const rightPad = Math.max(0, padLen - 1);
+            return ' '.repeat(leftPad) + val + ' '.repeat(rightPad);
+          });
+          return '|' + paddedCols.join('|') + '|';
+        };
+
+        tableText.push(formatRow(headers));
+        tableText.push(buildBorder('-'));
+
+        dataRows.forEach(row => {
+          tableText.push(formatRow(row));
+        });
+
+        tableText.push(buildBorder('='));
+        resultLines.push(tableText.join('\n'));
+      } catch (e) {
+        resultLines.push(...tableLines);
+      }
+      tableLines = [];
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const isTableRow = line.trim().startsWith('|') && line.includes('|');
+      
+      if (isTableRow) {
+        inTable = true;
+        tableLines.push(line);
+      } else {
+        if (inTable) {
+          flushTable();
+          inTable = false;
+        }
+        resultLines.push(line);
+      }
+    }
+    
+    if (inTable) {
+      flushTable();
+    }
+
+    return resultLines.join('\n');
+  };
+
+  const cleanMarkdownSeparators = (text: string): string => {
+    if (!text) return text;
+    let res = text;
+    // Minimize gap in plain text export: remove empty newlines directly following headers
+    res = res.replace(/^(#{1,6}\s*.+)\n+/gm, '$1\n');
+    
+    res = markdownTableToPlainText(res);
+    res = res.replace(/^#{1,6}\s*(.+)$/gm, '$1');
+    res = res.replace(/\*\*\*(.*?)\*\*\*/g, '$1');
+    res = res.replace(/\*\*(.*?)\*\*/g, '$1');
+    res = res.replace(/\*(.*?)\*/g, '$1');
+    res = res.replace(/___(.*?)___/g, '$1');
+    res = res.replace(/__(.*?)__/g, '$1');
+    res = res.replace(/_(.*?)_/g, '$1');
+    res = res.replace(/^\s*>\s+/gm, '');
+    res = res.replace(/^\s*[*+-]\s+/gm, '• ');
+    res = res.replace(/[*#]/g, '');
+    return res;
+  };
+
+  const markdownTablesToHTML = (text: string): string => {
+    if (!text) return text;
+    const lines = text.split('\n');
+    const result: string[] = [];
+    let inTable = false;
+    let tableHeaderCols: string[] = [];
+    let tableRows: string[][] = [];
+
+    const renderHTMLTable = (headers: string[], rows: string[][]): string => {
+      const headCols = headers.map(h => `<th style="border: 1px solid rgba(56, 185, 255, 0.25); background: rgba(56, 185, 255, 0.12); padding: 10px 14px; text-align: left; color: #38b9ff; font-weight: 600; font-family: sans-serif; font-size: 13px;">${h}</th>`).join('');
+      const bodyRows = rows.map(row => {
+        const cols = row.map(v => `<td style="border: 1px solid rgba(56, 185, 255, 0.15); padding: 9px 14px; color: #d8e6f5; font-size: 12.5px;">${v}</td>`).join('');
+        return `<tr style="border-bottom: 1px solid rgba(56, 185, 255, 0.08); background-color: rgba(3, 9, 18, 0.4);">${cols}</tr>`;
+      }).join('');
+
+      return `<div style="overflow-x: auto; margin: 18px 0; border-radius: 8px; border: 1px solid rgba(56, 185, 255, 0.18);"><table style="width: 100%; border-collapse: collapse; background: #06101d;"><thead><tr>${headCols}</tr></thead><tbody>${bodyRows}</tbody></table></div>`;
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      const isRow = line.startsWith('|') && line.endsWith('|');
+      
+      if (isRow) {
+        const cols = line.split('|').slice(1, -1).map(c => c.trim());
+        const isSep = cols.every(c => c.length === 0 || /^[-:| ]+$/.test(c));
+        
+        if (isSep) {
+          inTable = true;
+        } else {
+          if (!inTable) {
+            tableHeaderCols = cols;
+            tableRows = [];
+            inTable = true;
+          } else {
+            tableRows.push(cols);
+          }
+        }
+      } else {
+        if (inTable) {
+          result.push(renderHTMLTable(tableHeaderCols, tableRows));
+          inTable = false;
+          tableHeaderCols = [];
+          tableRows = [];
+        }
+        result.push(lines[i]);
+      }
+    }
+
+    if (inTable) {
+      result.push(renderHTMLTable(tableHeaderCols, tableRows));
+    }
+
+    return result.join('\n');
+  };
+
+  const renderAsBeautifulDialogHTML = (markdown: string): string => {
+    let processedText = convertSpelledGreekToSymbols(markdown);
+    processedText = markdownTablesToHTML(processedText);
+
+    const lines = processedText.split('\n');
+    const processedLines: string[] = [];
+    
+    let insideCodeBlock = false;
+    
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i];
+      const trimmed = line.trim();
+      
+      // Handle HTML elements generated by table parser already
+      if (trimmed.startsWith('<div') || trimmed.startsWith('<table') || trimmed.startsWith('<thead') || trimmed.startsWith('<tbody') || trimmed.startsWith('<tr') || trimmed.startsWith('<td') || trimmed.startsWith('<th') || trimmed.startsWith('</div') || trimmed.startsWith('</table') || trimmed.startsWith('</thead') || trimmed.startsWith('</tbody') || trimmed.startsWith('</tr') || trimmed.startsWith('</td') || trimmed.startsWith('</th')) {
+        processedLines.push(line);
+        continue;
+      }
+
+      // Handle code blocks
+      if (trimmed.startsWith('```')) {
+        insideCodeBlock = !insideCodeBlock;
+        if (insideCodeBlock) {
+          processedLines.push('<pre style="font-family: \'IBM Plex Mono\', monospace; background: #070d14; border: 1px solid rgba(56, 185, 255, 0.15); padding: 10px; border-radius: 8px; color: #2dcfb3; overflow-x: auto; margin: 8px 0; font-size: 12px; line-height: 1.4;"><code>');
+        } else {
+          processedLines.push('</code></pre>');
+        }
+        continue;
+      }
+      
+      if (insideCodeBlock) {
+        // Just push safe content inside code block
+        processedLines.push(trimmed.replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+        continue;
+      }
+      
+      // Handle Headers with tight line and margin heights to prevent wide spaces
+      if (trimmed.startsWith('## ')) {
+        const headerText = trimmed.replace(/^##\s+/, '');
+        processedLines.push(`<h2 style="color: #38b9ff; font-family: 'IBM Plex Sans', -apple-system, sans-serif; font-weight: bold; border-bottom: 1px solid rgba(56, 185, 255, 0.15); padding-bottom: 4px; margin-top: 14px; margin-bottom: 4px; font-size: 15px; line-height: 1.3;">${headerText}</h2>`);
+        continue;
+      }
+      if (trimmed.startsWith('### ')) {
+        const headerText = trimmed.replace(/^###\s+/, '');
+        processedLines.push(`<h3 style="color: #c8a96e; font-family: 'IBM Plex Sans', -apple-system, sans-serif; font-weight: bold; margin-top: 10px; margin-bottom: 4px; font-size: 13px; line-height: 1.3;">${headerText}</h3>`);
+        continue;
+      }
+      
+      // Handle list items (tight line spacing, no default list padding/margins to guarantee identical dialogue copy layout)
+      const listMatch = trimmed.match(/^[*+-]\s+(.+)$/);
+      if (listMatch) {
+        let liText = listMatch[1];
+        
+        // Inline tags preprocessing for robust styled copy
+        liText = liText.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #ffffff; font-weight: bold;">$1</strong>');
+        liText = liText.replace(/\*(.*?)\*/g, '<em style="color: #cbd5e1; font-style: italic;">$1</em>');
+        liText = liText.replace(/`(.*?)`/g, '<code style="font-family: \'IBM Plex Mono\', monospace; background: rgba(56, 185, 255, 0.08); border: 1px solid rgba(56, 185, 255, 0.15); padding: 1px 4px; border-radius: 4px; color: #2dcfb3; font-size: 12.5px;">$1</code>');
+        
+        // Match Compliance labels inside list safely using functional callbacks
+        liText = liText.replace(/\bNON-COMPLIANT\b/gi, (match) => `<strong style="color: #f06080; font-weight: bold;">${match}</strong>`);
+        liText = liText.replace(/\bCOMPLIANT\b/gi, (match) => `<strong style="color: #7ec98e; font-weight: bold;">${match}</strong>`);
+        liText = liText.replace(/\bINSUFFICIENT INFO\b/gi, (match) => `<strong style="color: #f59e0b; font-weight: bold;">${match}</strong>`);
+
+        processedLines.push(`<p style="margin: 2px 0; padding: 0; min-height: 1.25em; color: #d8e6f5; font-family: 'IBM Plex Sans', -apple-system, sans-serif; font-size: 13px; line-height: 1.35;"><span style="color: #38b9ff; margin-right: 8px; font-weight: bold;">•</span>${liText}</p>`);
+        continue;
+      }
+      
+      // If empty line, we insert a precise minimal break to minimize layout gaps
+      if (trimmed === '') {
+        processedLines.push('<div style="height: 2px; margin: 0; padding: 0;"></div>');
+        continue;
+      }
+      
+      // Regular line
+      let lineHtml = trimmed;
+      lineHtml = lineHtml.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #ffffff; font-weight: bold;">$1</strong>');
+      lineHtml = lineHtml.replace(/\*(.*?)\*/g, '<em style="color: #cbd5e1; font-style: italic;">$1</em>');
+      lineHtml = lineHtml.replace(/`(.*?)`/g, '<code style="font-family: \'IBM Plex Mono\', monospace; background: rgba(56, 185, 255, 0.08); border: 1px solid rgba(56, 185, 255, 0.15); padding: 1px 4px; border-radius: 4px; color: #2dcfb3; font-size: 12.5px;">$1</code>');
+      
+      // Match Compliances safely with callbacks
+      lineHtml = lineHtml.replace(/\bNON-COMPLIANT\b/gi, (match) => `<strong style="color: #f06080; font-weight: bold;">${match}</strong>`);
+      lineHtml = lineHtml.replace(/\bCOMPLIANT\b/gi, (match) => `<strong style="color: #7ec98e; font-weight: bold;">${match}</strong>`);
+      lineHtml = lineHtml.replace(/\bINSUFFICIENT INFO\b/gi, (match) => `<strong style="color: #f59e0b; font-weight: bold;">${match}</strong>`);
+      
+      processedLines.push(`<p style="margin: 2px 0; padding: 0; color: #d8e6f5; font-family: 'IBM Plex Sans', -apple-system, sans-serif; font-size: 13px; line-height: 1.35;">${lineHtml}</p>`);
+    }
+    
+    const finalHtml = processedLines.join('\n');
+
+    return `
+      <div style="background-color: #111e30; border: 1px solid rgba(56, 185, 255, 0.15); border-radius: 16px; padding: 20px 24px; color: #d8e6f5; font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13.5px; line-height: 1.5; max-width: 750px; margin: 10px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: #c8a96e; letter-spacing: 1px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid rgba(56,185,255,0.1); text-transform: uppercase; text-align: center; font-weight: 500;">Saudi Diyar Consultants · SBC-201:2024 Advisor Output</div>
+        <div style="font-family: 'IBM Plex Sans', -apple-system, sans-serif;">${finalHtml}</div>
+      </div>
+    `;
+  };
+
   const copyToClipboard = async (text: string, id: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      const processed = convertSpelledGreekToSymbols(text);
+      const plainText = cleanMarkdownSeparators(processed);
+      const htmlText = renderAsBeautifulDialogHTML(processed);
+
+      if (navigator.clipboard && window.ClipboardItem) {
+        const clipboardItem = new ClipboardItem({
+          "text/plain": new Blob([plainText], { type: "text/plain" }),
+          "text/html": new Blob([htmlText], { type: "text/html" })
+        });
+        await navigator.clipboard.write([clipboardItem]);
+      } else {
+        await navigator.clipboard.writeText(plainText);
+      }
       setCopyStatus(id);
       setTimeout(() => setCopyStatus(null), 2000);
     } catch (err) {
-      console.error('Failed to copy!', err);
+      console.error('Failed to copy rich text, using plain fallback!', err);
+      try {
+        const plainText = cleanMarkdownSeparators(convertSpelledGreekToSymbols(text));
+        await navigator.clipboard.writeText(plainText);
+        setCopyStatus(id);
+        setTimeout(() => setCopyStatus(null), 2000);
+      } catch (err2) {
+        console.error('Clipboard writeText failed!', err2);
+      }
     }
   };
 
   const shareVia = (platform: string, content: Message) => {
-    // Helper to format for sharing (Plain Text or HTML based on platform)
-    const formatForEmail = (str: string) => {
-      let res = str;
-      // For email, we use plain text with clear structure since mailto doesn't handle HTML well
-      res = res.replace(/^##\s+(.+)$/gm, '\n$1\n' + '='.repeat(15));
-      res = res.replace(/^###\s+(.+)$/gm, '\n$1\n' + '-'.repeat(15));
-      res = res.replace(/[*#]/g, '');
-      return res;
-    };
+    // Automatically copy identical rich dialog HTML containing pristine styles & colors to clipboard first
+    // so it holds exactly matched styles, colors, layouts, and bold titles on paste!
+    copyToClipboard(content.content, platform + '-' + content.timestamp);
 
-    const formatAsRichText = (str: string) => {
-      let res = str;
-      // Replace headers before stripping #
-      res = res.replace(/^##\s+(.+)$/gm, '<b style="color: #38b9ff; font-size: 1.25em; display: block; margin-top: 15px;">$1</b>');
-      res = res.replace(/^###\s+(.+)$/gm, '<b style="color: #c8a96e; display: block; margin-top: 10px;">$1</b>');
-      
-      // Handle status colors
-      res = res.replace(/\bNON-COMPLIANT\b/gi, '<b style="color: #ef4444;">$&</b>');
-      res = res.replace(/\bCOMPLIANT\b/gi, '<b style="color: #10b981;">$&</b>');
-      res = res.replace(/\bINSUFFICIENT INFO\b/gi, '<b style="color: #f59e0b;">$&</b>');
-
-      // Strip remaining * and #
-      res = res.replace(/[*#]/g, '');
-      return res;
-    };
-
-    const isEmail = platform === 'email';
-    const processedContent = isEmail ? formatForEmail(content.content) : formatAsRichText(content.content);
-    const text = `SBC-201:2024 Compliance Finding — SDC\n\n${processedContent}`;
+    const withGreek = convertSpelledGreekToSymbols(content.content);
+    const plainText = cleanMarkdownSeparators(withGreek);
+    
+    const text = `SBC-201:2024 Compliance Finding — SDC\n\n${plainText}`;
     const encodedText = encodeURIComponent(text);
     
     switch (platform) {
@@ -298,11 +618,14 @@ export default function App() {
 
     // Simple markdown-ish to HTML converter for PDF
     const formatContent = (content: string) => {
-      let html = content;
+      let html = convertSpelledGreekToSymbols(content);
       
+      // Handle tables with high fidelity using our robust HTML table parser first
+      html = markdownTablesToHTML(html);
+
       // Handle Headers (A) Summary, etc) before stripping #
-      html = html.replace(/^##\s+(.+)$/gm, '<h2 style="color: #38b9ff; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-top: 25px; margin-bottom: 15px; font-size: 16pt; font-family: sans-serif;">$1</h2>');
-      html = html.replace(/^###\s+(.+)$/gm, '<h3 style="color: #c8a96e; margin-top: 20px; font-size: 13pt; font-family: sans-serif;">$1</h3>');
+      html = html.replace(/^##\s+(.+)$/gm, '<h2 style="color: #38b9ff; border-bottom: 1px solid rgba(56, 185, 255, 0.15); padding-bottom: 3px; margin-top: 12px; margin-bottom: 2px; font-size: 14pt; font-family: sans-serif; page-break-after: avoid; font-weight: bold;">$1</h2>');
+      html = html.replace(/^###\s+(.+)$/gm, '<h3 style="color: #c8a96e; margin-top: 10px; margin-bottom: 2px; font-size: 11pt; font-family: sans-serif; page-break-after: avoid; font-weight: bold;">$1</h3>');
 
       // Status colors
       html = html.replace(/\bNON-COMPLIANT\b/gi, (match) => `<span style="color: #ef4444; font-weight: bold;">${match}</span>`);
@@ -318,19 +641,11 @@ export default function App() {
       // Remove remaining markdown markers
       html = html.replace(/[*#]/g, '');
 
-      // Handle tables (very basic regex-based conversion for the PDF)
-      const tableRegex = /\|(.+)\|[\r\n]+\|([-| ]+)\|[\r\n]+((?:\|.+\|[\r\n]*)+)/g;
-      html = html.replace(tableRegex, (match, header, separator, rows) => {
-        const headerCols = header.split('|').filter((c: string) => c.trim()).map((c: string) => `<th style="border: 1px solid #ddd; padding: 8px; background: #f2f2f2; text-align: left;">${c.trim()}</th>`).join('');
-        const bodyRows = rows.trim().split('\n').map((row: string) => {
-          const cols = row.split('|').filter((c: string) => c.trim()).map((c: string) => `<td style="border: 1px solid #ddd; padding: 8px;">${c.trim()}</td>`).join('');
-          return `<tr>${cols}</tr>`;
-        }).join('');
-        return `<table style="width: 100%; border-collapse: collapse; margin: 15px 0;"><thead><tr>${headerCols}</tr></thead><tbody>${bodyRows}</tbody></table>`;
-      });
-
       // Handle simple newlines
       html = html.replace(/\n/g, '<br>');
+      
+      // Clean up extra breaks directly below headings to minimize gap
+      html = html.replace(/(<\/h[23]>)\s*(<br\s*\/?>\s*)+/gi, '$1');
       
       return html;
     };
@@ -770,7 +1085,7 @@ export default function App() {
                               }
                             }}
                           >
-                            {msg.content}
+                            {convertSpelledGreekToSymbols(msg.content)}
                           </Markdown>
                         </div>
                       </div>
@@ -789,25 +1104,25 @@ export default function App() {
                             onClick={() => shareVia('whatsapp', msg)}
                             className="flex items-center gap-1 py-1 px-2 rounded-md border border-green-500/30 text-green-500 font-mono text-[9px] hover:bg-green-500/10 transition-all cursor-pointer"
                           >
-                            WhatsApp
+                            {copyStatus === 'whatsapp-' + msg.timestamp ? '✓ Copied with Colors!' : 'WhatsApp'}
                           </button>
                           <button 
                             onClick={() => shareVia('telegram', msg)}
                             className="flex items-center gap-1 py-1 px-2 rounded-md border border-sky-500/30 text-sky-500 font-mono text-[9px] hover:bg-sky-500/10 transition-all cursor-pointer"
                           >
-                            Telegram
+                            {copyStatus === 'telegram-' + msg.timestamp ? '✓ Copied with Colors!' : 'Telegram'}
                           </button>
                           <button 
                             onClick={() => shareVia('teams', msg)}
                             className="flex items-center gap-1 py-1 px-2 rounded-md border border-indigo-500/30 text-indigo-500 font-mono text-[9px] hover:bg-indigo-500/10 transition-all cursor-pointer"
                           >
-                            Teams
+                            {copyStatus === 'teams-' + msg.timestamp ? '✓ Copied with Colors!' : 'Teams'}
                           </button>
                           <button 
                             onClick={() => shareVia('email', msg)}
                             className="flex items-center gap-1 py-1 px-2 rounded-md border border-amber-500/30 text-amber-500 font-mono text-[9px] hover:bg-amber-500/10 transition-all cursor-pointer"
                           >
-                            Email
+                            {copyStatus === 'email-' + msg.timestamp ? '✓ Copied with Colors!' : 'Email'}
                           </button>
                         </div>
                       )}
