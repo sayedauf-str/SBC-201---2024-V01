@@ -404,10 +404,13 @@ export default function App() {
 
           ${conversationHTML}
 
-          <div class="footer">
-            Restricted for Internal Use by SDC Only<br>
+          <div class="footer" style="margin-top: 50px; border-top: 1px dashed #ccc; padding-top: 15px; text-align: center; font-family: monospace; font-size: 8.5px; line-height: 1.6; letter-spacing: 1px; color: #bca880;">
+            <span style="color: #ff3b30; font-weight: bold;">Restricted</span> for Internal Use by<br>
+            Saudi Diyar Member <span style="color: #ff3b30; font-weight: bold;">Only</span><br>
             Developed by Sayed Auf<br>
-            Version (V-01) 2026
+            Version (V-01) 2026<br>
+            All copyright reserved for:<br>
+            <a href="https://www.aufacademy.site" target="_blank" rel="noopener noreferrer" style="color: #38b9ff; text-decoration: none; font-weight: bold;">www.aufacademy.site</a>
           </div>
           <script>
             window.onload = () => {
@@ -532,9 +535,17 @@ export default function App() {
           </form>
 
           {/* Secure watermark label */}
-          <div className="mt-8 text-center border-t border-cyan/10 pt-4 font-mono text-[7.5px] text-gold tracking-widest leading-relaxed">
-            <span className="text-red-500 font-bold" style={{ color: '#ff3b30', textShadow: '0 0 10px rgba(255,59,48,0.7)' }}>Restricted</span> for Internal Use by SDC Only<br />
-            Developed by Sayed Auf · Version (V-01) 2026
+          <div className="mt-8 text-center border-t border-cyan/10 pt-4 font-mono text-[8px] text-gold tracking-widest leading-relaxed">
+            <div className="transition-all duration-300" style={{ textShadow: '0 0 8px rgba(200, 169, 110, 0.45)' }}>
+              <span className="text-red-500 font-bold" style={{ color: '#ff3b30', textShadow: '0 0 12px rgba(255, 59, 48, 0.85), 0 0 3px rgba(255, 59, 48, 0.4)' }}>Restricted</span> for Internal Use by<br />
+              Saudi Diyar Member <span className="text-red-500 font-bold" style={{ color: '#ff3b30', textShadow: '0 0 12px rgba(255, 59, 48, 0.85), 0 0 3px rgba(255, 59, 48, 0.4)' }}>Only</span><br />
+              <span className="opacity-95">Developed by Sayed Auf</span><br />
+              <span className="opacity-95">Version (V-01) 2026</span><br />
+              <span className="opacity-80 text-[7px]" style={{ textShadow: 'none' }}>All copyright reserved for:</span><br />
+              <a href="https://www.aufacademy.site" target="_blank" rel="noopener noreferrer" className="text-cyan font-bold hover:underline hover:text-cyan/80 transition-all text-[8px] ml-1 inline-block" style={{ textShadow: '0 0 10px rgba(56, 185, 255, 0.5)' }}>
+                www.aufacademy.site
+              </a>
+            </div>
           </div>
         </motion.div>
       </div>
@@ -641,9 +652,14 @@ export default function App() {
 
           <div className="mt-auto p-4 border-t border-cyan/10 font-mono text-[8.5px] text-gold tracking-widest leading-relaxed text-center group transition-all duration-300">
             <div className="transition-all duration-300" style={{ textShadow: '0 0 8px rgba(200, 169, 110, 0.45)' }}>
-              <span className="text-red-500 font-bold" style={{ color: '#ff3b30', textShadow: '0 0 12px rgba(255, 59, 48, 0.85), 0 0 3px rgba(255, 59, 48, 0.4)' }}>Restricted</span> for Internal Use by SDC Only<br />
+              <span className="text-red-500 font-bold" style={{ color: '#ff3b30', textShadow: '0 0 12px rgba(255, 59, 48, 0.85), 0 0 3px rgba(255, 59, 48, 0.4)' }}>Restricted</span> for Internal Use by<br />
+              Saudi Diyar Member <span className="text-red-500 font-bold" style={{ color: '#ff3b30', textShadow: '0 0 12px rgba(255, 59, 48, 0.85), 0 0 3px rgba(255, 59, 48, 0.4)' }}>Only</span><br />
               <span className="opacity-95">Developed by Sayed Auf</span><br />
-              <span className="opacity-90">Version (V-01) 2026</span>
+              <span className="opacity-90">Version (V-01) 2026</span><br />
+              <span className="opacity-80 text-[7.5px]" style={{ textShadow: 'none' }}>All copyright reserved for:</span><br />
+              <a href="https://www.aufacademy.site" target="_blank" rel="noopener noreferrer" className="text-cyan font-bold hover:underline hover:text-cyan/80 transition-all text-[8.5px] ml-1 inline-block" style={{ textShadow: '0 0 10px rgba(56, 185, 255, 0.5)' }}>
+                www.aufacademy.site
+              </a>
             </div>
           </div>
         </aside>
