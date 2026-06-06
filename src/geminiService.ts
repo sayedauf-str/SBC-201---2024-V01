@@ -1,13 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
 
 // Support both platform-native process.env and Vite-standard import.meta.env
-const API_KEY = process.env.GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || "";
+const API_KEY = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY || "";
 
 const ai = new GoogleGenAI({ 
   apiKey: API_KEY 
 });
 
-async function handleApiError(error: any) {
+async function handleApiError(error: any): Promise<never> {
   const message = error?.message || String(error);
   if (message.includes("PERMISSION_DENIED") || message.includes("API_KEY_INVALID") || message.includes("invalid api key")) {
     throw new Error("Invalid or missing API Key. Please check your Gemini API key in Settings > Secrets.");
