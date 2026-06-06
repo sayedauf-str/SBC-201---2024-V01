@@ -15,7 +15,11 @@ import {
   Share2,
   Mail,
   MessageCircle,
-  Send as SendIcon
+  Send as SendIcon,
+  Lock,
+  LogIn,
+  LogOut,
+  User
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
@@ -43,6 +47,14 @@ interface Message {
 }
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('sdc_authenticated') === 'true';
+  });
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPasscode, setLoginPasscode] = useState('');
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -170,6 +182,53 @@ export default function App() {
       setAttachedFile(null);
       setInput('');
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('sdc_authenticated');
+    localStorage.removeItem('sdc_user_email');
+    setIsAuthenticated(false);
+    setLoginPasscode('');
+    setLoginError(null);
+  };
+
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+
+    const email = loginEmail.trim().toLowerCase();
+    if (!email) {
+      setLoginError("Please enter your Saudi Diyar Email address.");
+      return;
+    }
+
+    if (!email.endsWith('@diyar.com')) {
+      setLoginError("Access Restricted: Only active @diyar.com domain email addresses are permitted.");
+      return;
+    }
+
+    if (!loginPasscode) {
+      setLoginError("Please enter your SDC password.");
+      return;
+    }
+
+    setIsLoggingIn(true);
+
+    // Simulate secure enterprise verification with high priority timing
+    setTimeout(() => {
+      const cleanPasscodeInput = loginPasscode.trim();
+      const isPasscodeValid = cleanPasscodeInput === "Diyar@2030";
+
+      if (isPasscodeValid) {
+        localStorage.setItem('sdc_authenticated', 'true');
+        localStorage.setItem('sdc_user_email', email);
+        setIsAuthenticated(true);
+        setLoginError(null);
+      } else {
+        setLoginError("Incorrect password. Please use the SDC authorization password for the diyar.com domain.");
+      }
+      setIsLoggingIn(false);
+    }, 1000);
   };
 
   const copyToClipboard = async (text: string, id: string) => {
@@ -364,6 +423,124 @@ export default function App() {
     printWindow.document.close();
   };
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-bg-void flex flex-col justify-center items-center p-6 relative overflow-hidden font-sans">
+        {/* Animated ambient backdrop glows */}
+        <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-gold/5 rounded-full blur-[140px] pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-cyan/5 rounded-full blur-[130px] pointer-events-none" />
+        
+        {/* Decorative Grid */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#0c1d30_1px,transparent_1px),linear-gradient(to_bottom,#0c1d30_1px,transparent_1px)] bg-[size:32px_32px] opacity-15" />
+
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.96, y: 15 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.65, ease: "easeOut" }}
+          className="relative w-full max-w-[450px] bg-gradient-to-b from-[#06101d] to-[#040911] border border-gold/25 rounded-[24px] px-8 py-10 shadow-[0_20px_50px_rgba(0,0,0,0.6)] backdrop-blur-2xl z-10 flex flex-col"
+        >
+          {/* Header Badge */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="px-6 py-3.5 bg-[#030912] border border-gold/45 rounded-xl flex flex-col items-center justify-center font-display text-gold leading-tight shadow-[0_0_20px_rgba(200,169,110,0.18)] mb-6 text-center">
+              <div className="text-sm font-extrabold tracking-wider uppercase whitespace-nowrap">Saudi Diyar Consultant</div>
+              <div className="text-[9px] font-semibold opacity-90 uppercase tracking-widest mt-0.5">AI Integration & Automation Unit</div>
+            </div>
+            
+            <h2 className="text-[#d8e6f5] font-display text-2xl font-semibold tracking-wide text-center">
+              SBC-201:2024 Advisor Access
+            </h2>
+            <p className="text-xs text-slate-400 mt-2 text-center max-w-sm leading-relaxed">
+              This system is strictly reserved for authorized architects and personnel of Saudi Building Code committee reviews.
+            </p>
+          </div>
+
+          <form onSubmit={handleLoginSubmit} className="space-y-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="font-mono text-[10px] text-slate-500 uppercase tracking-wider pl-1 flex items-center gap-1.5">
+                <User size={11} className="text-gold/80" /> Diyar Corporate Email
+              </label>
+              <div className="relative">
+                <input 
+                  type="email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder="username@diyar.com"
+                  disabled={isLoggingIn}
+                  className="w-full bg-[#030912] border border-cyan/15 rounded-xl px-4 py-3 text-sm text-[#d8e6f5] outline-none transition-all placeholder:text-slate-800 focus:border-gold focus:ring-4 focus:ring-gold/5"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <div className="flex justify-between items-center px-1">
+                <label className="font-mono text-[10px] text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <Lock size={11} className="text-gold/80" /> SDC Access Password
+                </label>
+                <div className="group relative">
+                  <span className="text-[9px] text-gold/70 cursor-help font-mono border-b border-dashed border-gold/30 hover:text-gold transition-colors">
+                    Access Key Info
+                  </span>
+                  <div className="pointer-events-none group-hover:pointer-events-auto opacity-0 group-hover:opacity-100 transition-all duration-300 absolute right-0 bottom-6 w-56 bg-bg-deep border border-gold/30 rounded-lg p-2 text-[9px] leading-relaxed text-slate-300 shadow-xl font-mono z-50">
+                    Access is restricted to active <span className="text-gold font-bold">@diyar.com</span> emails. Use the SDC authorization password: <span className="text-gold font-bold">Diyar@2030</span>.
+                  </div>
+                </div>
+              </div>
+              <div className="relative">
+                <input 
+                  type="password"
+                  value={loginPasscode}
+                  onChange={(e) => setLoginPasscode(e.target.value)}
+                  placeholder="Enter passcode / password"
+                  disabled={isLoggingIn}
+                  className="w-full bg-[#030912] border border-cyan/15 rounded-xl px-4 py-3 text-sm text-[#d8e6f5] outline-none transition-all placeholder:text-slate-800 focus:border-gold focus:ring-4 focus:ring-gold/5"
+                  required
+                />
+              </div>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {loginError && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  className="bg-rose/10 border border-rose/30 rounded-xl p-3 text-xs text-rose leading-relaxed flex items-start gap-2.5"
+                >
+                  <AlertCircle size={14} className="shrink-0 mt-0.5 text-rose" />
+                  <span>{loginError}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <button
+              type="submit"
+              disabled={isLoggingIn}
+              className="w-full bg-gradient-to-br from-gold/22 to-gold/10 hover:from-gold/30 hover:to-gold/18 border border-gold/45 hover:border-gold rounded-xl py-3 text-gold hover:shadow-[0_0_20px_rgba(200,169,110,0.22)] font-mono text-xs font-semibold tracking-wide transition-all uppercase flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40"
+            >
+              {isLoggingIn ? (
+                <>
+                  <RefreshCcw size={14} className="animate-spin text-gold" />
+                  Authenticating SDC Credentials...
+                </>
+              ) : (
+                <>
+                  <LogIn size={14} /> Verify Secure Access
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Secure watermark label */}
+          <div className="mt-8 text-center border-t border-cyan/10 pt-4 font-mono text-[7.5px] text-gold tracking-widest leading-relaxed">
+            <span className="text-red-500 font-bold" style={{ color: '#ff3b30', textShadow: '0 0 10px rgba(255,59,48,0.7)' }}>Restricted</span> for Internal Use by SDC Only<br />
+            Developed by Sayed Auf · Version (V-01) 2026
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen relative z-10">
       {/* Top Bar */}
@@ -404,6 +581,13 @@ export default function App() {
             className="flex items-center gap-1.5 px-3.5 py-2 bg-rose/10 border border-rose/25 rounded-lg text-rose font-mono text-[11px] cursor-pointer hover:bg-rose/20 hover:border-rose transition-all"
           >
             <RefreshCcw size={14} /> New Session
+          </button>
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-800/40 hover:bg-slate-800/90 border border-slate-700 rounded-lg text-slate-400 hover:text-gold transition-all duration-300 font-mono text-[11px] cursor-pointer group"
+            title="Sign Out"
+          >
+            <LogOut size={14} className="text-slate-400 group-hover:text-gold transition-colors" /> Sign Out
           </button>
         </div>
       </header>
